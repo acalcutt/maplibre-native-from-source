@@ -22,7 +22,8 @@
     "@acalcutt/node-pre-gyp-github": "2.0.1"
   },
   "devDependencies": {
-    "semver": "^7.6.0"
+    "semver": "^7.6.0",
+    "tape": "^5.7.5"
   },
   "engines": {
     "node": ">=20"
