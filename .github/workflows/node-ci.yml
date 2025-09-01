@@ -53,6 +53,14 @@ jobs:
           submodules: true
           fetch-depth: 0
 
+      - name: Initialize and Update Submodules
+        shell: bash
+        run: |
+          echo "Fetching submodule HEADs..."
+          git submodule sync --recursive
+          echo "Updating submodules..."
+          git -c core.longpaths=true submodule update --init --force --recursive || echo "Submodule update had some issues, continuing..."
+
       - name: Get OS Architecture
         if: runner.os == 'MacOS' || runner.os == 'Linux'
         run: uname -m
