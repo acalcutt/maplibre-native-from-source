@@ -191,6 +191,5 @@ jobs:
 
       # On PRs make sure that the npm package can be packaged.
       - name: Pack
-        working-directory: maplibre-native/platform/node
         run: |
           npm pack --dry-run
