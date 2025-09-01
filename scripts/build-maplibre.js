@@ -17,6 +17,7 @@ function getPresetInfo() {
   let presetName = null;
   let buildDir = null;
   let generator = null;
+  let cmakeArgs = [];
 
   if (platform === 'darwin') { // macOS
     presetName = 'macos-metal-node';
@@ -28,9 +29,17 @@ function getPresetInfo() {
     if (arch === 'arm64') {
       presetName = 'windows-arm64-opengl-node';
       generator = 'Visual Studio 17 2022';
+      // IMPORTANT: Set VCPKG_TARGET_TRIPLET based on architecture
+      cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=arm64-windows');
+      // Ensure correct architecture is also set for VS generator if not implicit
+      // The preset likely has "architecture", but passing it explicitly can help.
+      // If you see "The CXX compiler identification is MSVC 19.44.35213.0" without arch,
+      // you might need: cmakeArgs.push('-A', 'arm64'); but the preset should handle this.
     } else if (arch === 'x64') {
       presetName = 'windows-opengl-node';
       generator = 'Ninja';
+      // IMPORTANT: Set VCPKG_TARGET_TRIPLET for x64
+      cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=x64-windows');
     }
   }
 
@@ -65,18 +74,17 @@ function getPresetInfo() {
   console.log(`Selected Preset: "${presetName}" for ${platform} ${arch}`);
   console.log(`Using Generator: "${generator}"`);
   console.log(`Build Directory: "${buildDir}"`);
+  console.log(`Additional CMake Args: ${JSON.stringify(cmakeArgs)}`);
 
-  return { presetName, buildDir, generator };
+  return { presetName, buildDir, generator, cmakeArgs };
 }
 
 // --- Main Build Execution ---
 try {
-  const { presetName, buildDir, generator } = getPresetInfo();
+  const { presetName, buildDir, generator, cmakeArgs } = getPresetInfo();
 
   // --- Cleanup old build directory before configuring ---
   console.log(`Cleaning previous build directory: ${buildDir}`);
-  
-  // Check if the directory exists before trying to remove it
   if (fs.existsSync(buildDir)) {
     const rmCommand = os.platform() === 'win32' ? `rmdir /s /q "${buildDir}"` : `rm -rf "${buildDir}"`;
     console.log(`Executing cleanup: ${rmCommand}`);
@@ -86,8 +94,16 @@ try {
   }
 
   // --- Configure using CMake with the selected preset ---
-  console.log(`Configuring maplibre-native from ${maplibreNativeSourceDir} to ${buildDir} using preset "${presetName}"...`);
-  execSync(`cmake -S ${maplibreNativeSourceDir} -B ${buildDir} --preset=${presetName}`, { stdio: 'inherit' });
+  // Construct the full cmake command including the additional arguments
+  const configureCommand = [
+    `cmake -S ${maplibreNativeSourceDir}`,
+    `-B ${buildDir}`,
+    `--preset=${presetName}`,
+    ...cmakeArgs // Pass the already formatted arguments
+  ].join(' ');
+
+  console.log(`Configuring maplibre-native using: ${configureCommand}`);
+  execSync(configureCommand, { stdio: 'inherit' });
 
   // --- Build using the specified generator ---
   let buildCommand;
@@ -106,6 +122,7 @@ try {
     } catch (e) {
       console.warn(`Could not find CMAKE_BUILD_TYPE for preset "${presetName}":`, e.message);
     }
+    // For VS generators, the --config argument is critical.
     buildCommand = `cmake --build ${buildDir} --config ${buildType}`;
     console.log(`For VS generator, using build type: ${buildType}`);
   } else if (generator.toLowerCase().includes('makefiles')) {
@@ -123,4 +140,3 @@ try {
   console.error('Error building maplibre-native:', error);
   process.exit(1);
 }
-
