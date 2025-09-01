@@ -1,6 +1,7 @@
 const { execSync } = require('child_process');
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
 
 // --- Configuration ---
 const maplibreNativeSourceDir = path.resolve(__dirname, '../maplibre-native');
@@ -19,10 +20,10 @@ function getPresetInfo() {
 
   if (platform === 'darwin') { // macOS
     presetName = 'macos-metal-node';
-    generator = 'Ninja'; // macOS presets use Ninja
+    generator = 'Ninja';
   } else if (platform === 'linux') { // Linux
     presetName = 'linux-opengl-node';
-    generator = 'Ninja'; // Linux presets use Ninja
+    generator = 'Ninja';
   } else if (platform === 'win32') { // Windows
     if (arch === 'arm64') {
       presetName = 'windows-arm64-opengl-node';
@@ -39,7 +40,7 @@ function getPresetInfo() {
 
   // --- Determine Build Directory ---
   let presetDefinition = null;
-  let determinedBuildDir = null; // Use a different variable name to avoid confusion
+  let determinedBuildDir = null;
 
   try {
     const presetsData = require(cmakePresetsPath);
@@ -48,21 +49,18 @@ function getPresetInfo() {
     if (configurePreset) {
       presetDefinition = configurePreset;
       if (configurePreset.binaryDir) {
-        // Resolve `${sourceDir}` relative to the source directory itself.
         determinedBuildDir = configurePreset.binaryDir.replace('${sourceDir}', maplibreNativeSourceDir);
       }
     }
   } catch (e) {
     console.warn(`Could not parse CMakePresets.json to find binaryDir for preset "${presetName}":`, e.message);
-    // Fallback if binaryDir is not defined or parsing fails
     determinedBuildDir = path.join(maplibreNativeSourceDir, `build-${presetName}`);
   }
 
-  // If buildDir was not explicitly set by the preset, use a convention.
   if (!determinedBuildDir) {
     determinedBuildDir = path.join(maplibreNativeSourceDir, `build-${presetName}`);
   }
-  buildDir = determinedBuildDir; // Assign to the outer scope variable
+  buildDir = determinedBuildDir;
 
   console.log(`Selected Preset: "${presetName}" for ${platform} ${arch}`);
   console.log(`Using Generator: "${generator}"`);
@@ -77,9 +75,15 @@ try {
 
   // --- Cleanup old build directory before configuring ---
   console.log(`Cleaning previous build directory: ${buildDir}`);
-  // Using a platform-aware rm command
-  const rmCommand = os.platform() === 'win32' ? `rmdir /s /q "${buildDir}"` : `rm -rf "${buildDir}"`;
-  execSync(rmCommand, { stdio: 'inherit', shell: true });
+  
+  // Check if the directory exists before trying to remove it
+  if (fs.existsSync(buildDir)) {
+    const rmCommand = os.platform() === 'win32' ? `rmdir /s /q "${buildDir}"` : `rm -rf "${buildDir}"`;
+    console.log(`Executing cleanup: ${rmCommand}`);
+    execSync(rmCommand, { stdio: 'inherit', shell: true });
+  } else {
+    console.log(`Build directory ${buildDir} does not exist, skipping cleanup.`);
+  }
 
   // --- Configure using CMake with the selected preset ---
   console.log(`Configuring maplibre-native from ${maplibreNativeSourceDir} to ${buildDir} using preset "${presetName}"...`);
@@ -119,3 +123,4 @@ try {
   console.error('Error building maplibre-native:', error);
   process.exit(1);
 }
+
