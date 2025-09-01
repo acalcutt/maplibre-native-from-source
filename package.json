@@ -1,0 +1,41 @@
+{
+  "name": "@acalcutt/maplibre-native-from-source",
+  "version": "6.2.0",
+  "description": "Renders map tiles with MapLibre Native",
+  "keywords": [
+    "maplibre",
+    "gl"
+  ],
+  "directories": {
+    "scripts": "scripts",
+    "maplibre-native": "maplibre-native"
+  },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acalcutt/maplibre-native-from-source.git"
+  },
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "@acalcutt/node-pre-gyp": "2.0.1",
+    "@acalcutt/node-pre-gyp-github": "2.0.1"
+  },
+  "devDependencies": {
+    "semver": "^7.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node ./scripts/build-maplibre.js"
+  },
+  "gypfile": true,
+  "binary": {
+    "module_name": "mbgl",
+    "module_path": "./lib/{node_abi}",
+    "host": "https://github.com/acalcutt/maplibre-native-from-source/releases/download/",
+    "remote_path": "node-v{version}",
+    "package_name": "{node_abi}-{platform}-{arch}-{configuration}.tar.gz"
+  }
+}
