@@ -1,6 +1,7 @@
 .git
 .github
 .gitmodules
+.ccache
 maplibre-native/.aspect
 maplibre-native/.git
 maplibre-native/.github
