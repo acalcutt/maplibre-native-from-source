@@ -6,12 +6,8 @@
     "maplibre",
     "gl"
   ],
-  "directories": {
-    "scripts": "scripts",
-    "maplibre-native": "maplibre-native"
-  },
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "maplibre-native/platform/node/index.js",
+  "types": "maplibre-native/platform/node/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acalcutt/maplibre-native-from-source.git"
