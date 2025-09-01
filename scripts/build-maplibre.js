@@ -29,16 +29,10 @@ function getPresetInfo() {
     if (arch === 'arm64') {
       presetName = 'windows-arm64-opengl-node';
       generator = 'Visual Studio 17 2022';
-      // IMPORTANT: Set VCPKG_TARGET_TRIPLET based on architecture
       cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=arm64-windows');
-      // Ensure correct architecture is also set for VS generator if not implicit
-      // The preset likely has "architecture", but passing it explicitly can help.
-      // If you see "The CXX compiler identification is MSVC 19.44.35213.0" without arch,
-      // you might need: cmakeArgs.push('-A', 'arm64'); but the preset should handle this.
     } else if (arch === 'x64') {
       presetName = 'windows-opengl-node';
       generator = 'Ninja';
-      // IMPORTANT: Set VCPKG_TARGET_TRIPLET for x64
       cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=x64-windows');
     }
   }
