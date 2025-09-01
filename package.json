@@ -22,6 +22,7 @@
     "@acalcutt/node-pre-gyp-github": "2.0.1"
   },
   "devDependencies": {
+    "pixelmatch": "^5.3.0",
     "pngjs": "^7.0.0",
     "semver": "^7.6.0",
     "tape": "^5.7.5"
