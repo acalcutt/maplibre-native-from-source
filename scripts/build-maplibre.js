@@ -18,7 +18,6 @@ function getPresetInfo() {
   let buildDir = null;
   let generator = null;
   let cmakeArgs = [];
-  let vcpkgTriplet = null; // For VCPKG_TARGET_TRIPLET
 
   if (platform === 'darwin') { // macOS
     presetName = 'macos-metal-node';
@@ -30,13 +29,11 @@ function getPresetInfo() {
     if (arch === 'arm64') {
       presetName = 'windows-arm64-opengl-node';
       generator = 'Visual Studio 17 2022';
-      vcpkgTriplet = 'arm64-windows';
-      cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=arm64-windows');
+      //cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=arm64-windows');
     } else if (arch === 'x64') {
       presetName = 'windows-opengl-node';
       generator = 'Ninja';
-      vcpkgTriplet = 'x64-windows';
-      cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=x64-windows');
+      //cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=x64-windows');
     }
   }
 
@@ -72,42 +69,20 @@ function getPresetInfo() {
   console.log(`Using Generator: "${generator}"`);
   console.log(`Build Directory: "${buildDir}"`);
   console.log(`Additional CMake Args: ${JSON.stringify(cmakeArgs)}`);
-  if (vcpkgTriplet) {
-    console.log(`VCPKG Triplet: ${vcpkgTriplet}`);
-  }
 
-  return { presetName, buildDir, generator, cmakeArgs, vcpkgTriplet, arch };
-}
-
-// --- Helper function to create environment with VSCMD_ARG_TGT_ARCH and VCPKG_TARGET_TRIPLET ---
-function createEnvironment(arch, vcpkgTriplet) {
-  const env = { ...process.env };
-  
-  if (process.platform === 'win32') {
-    if (arch) {
-      env.VSCMD_ARG_TGT_ARCH = arch;
-      console.log(`Setting VSCMD_ARG_TGT_ARCH=${arch}`);
-    }
-    if (vcpkgTriplet) {
-      env.VCPKG_TARGET_TRIPLET = vcpkgTriplet;
-      console.log(`Setting VCPKG_TARGET_TRIPLET=${vcpkgTriplet}`);
-    }
-  }
-  
-  return env;
+  return { presetName, buildDir, generator, cmakeArgs, arch };
 }
 
 // --- Main Build Execution ---
 try {
-  const { presetName, buildDir, generator, cmakeArgs, vcpkgTriplet, arch } = getPresetInfo();
-  const buildEnv = createEnvironment(arch, vcpkgTriplet);
+  const { presetName, buildDir, generator, cmakeArgs, arch } = getPresetInfo();
 
   // --- Cleanup old build directory before configuring ---
   console.log(`Cleaning previous build directory: ${buildDir}`);
   if (fs.existsSync(buildDir)) {
     const rmCommand = os.platform() === 'win32' ? `rmdir /s /q "${buildDir}"` : `rm -rf "${buildDir}"`;
     console.log(`Executing cleanup: ${rmCommand}`);
-    execSync(rmCommand, { stdio: 'inherit', shell: true, env: buildEnv });
+    execSync(rmCommand, { stdio: 'inherit', shell: true });
   } else {
     console.log(`Build directory ${buildDir} does not exist, skipping cleanup.`);
   }
@@ -122,7 +97,7 @@ try {
   ].join(' ');
 
   console.log(`Configuring maplibre-native using: ${configureCommand}`);
-  execSync(configureCommand, { stdio: 'inherit', env: buildEnv });
+  execSync(configureCommand, { stdio: 'inherit' });
 
   // --- Build using the specified generator ---
   let buildCommand;
@@ -151,7 +126,7 @@ try {
   }
 
   console.log(`Building maplibre-native using: ${buildCommand}`);
-  execSync(buildCommand, { stdio: 'inherit', shell: true, env: buildEnv });
+  execSync(buildCommand, { stdio: 'inherit', shell: true });
 
   console.log('maplibre-native build successful!');
 
