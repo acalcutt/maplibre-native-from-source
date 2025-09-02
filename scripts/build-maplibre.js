@@ -29,11 +29,11 @@ function getPresetInfo() {
     if (arch === 'arm64') {
       presetName = 'windows-arm64-opengl-node';
       generator = 'Visual Studio 17 2022';
-      cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=arm64-windows');
+      // cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=arm64-windows');
     } else if (arch === 'x64') {
       presetName = 'windows-opengl-node';
       generator = 'Ninja';
-      cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=x64-windows');
+      // cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=x64-windows');
     }
   }
 
