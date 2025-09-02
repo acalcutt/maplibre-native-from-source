@@ -7,7 +7,6 @@ maplibre-native/.git
 maplibre-native/.github
 maplibre-native/.gitmodules
 maplibre-native/bazel
-maplibre-native/benchmark
 maplibre-native/build
 maplibre-native/design-proposals
 maplibre-native/docker
