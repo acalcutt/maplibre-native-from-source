@@ -1,5 +1,5 @@
 {
-  "name": "@acalcutt/maplibre-native-from-source",
+  "name": "@acalcutt/maplibre-native-with-source",
   "version": "6.2.0",
   "description": "Renders map tiles with MapLibre Native",
   "keywords": [
