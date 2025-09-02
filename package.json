@@ -27,12 +27,15 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "node ./scripts/build-maplibre.js"
+    "install": "node-pre-gyp install --fallback-to-build=false || npm run build",
+    "build": "node scripts/build-maplibre.js",
+    "prepack": "node scripts/prepack.js",
+    "postpack": "node scripts/postpack.js"
   },
-  "gypfile": true,
+  "gypfile": false,
   "binary": {
     "module_name": "mbgl",
-    "module_path": "./lib/{node_abi}",
+    "module_path": "./maplibre-native/platform/node/lib/{node_abi}",
     "host": "https://github.com/acalcutt/maplibre-native-from-source/releases/download/",
     "remote_path": "node-v{version}",
     "package_name": "{node_abi}-{platform}-{arch}-{configuration}.tar.gz"
