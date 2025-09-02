@@ -18,7 +18,7 @@ function getPresetInfo() {
   let buildDir = null;
   let generator = null;
   let cmakeArgs = [];
-  let targetArch = null; // For VSCMD_ARG_TGT_ARCH
+  let vcpkgTriplet = null; // For VCPKG_TARGET_TRIPLET
 
   if (platform === 'darwin') { // macOS
     presetName = 'macos-metal-node';
@@ -30,12 +30,12 @@ function getPresetInfo() {
     if (arch === 'arm64') {
       presetName = 'windows-arm64-opengl-node';
       generator = 'Visual Studio 17 2022';
-      targetArch = 'arm64';
+      vcpkgTriplet = 'arm64-windows';
       // cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=arm64-windows');
     } else if (arch === 'x64') {
       presetName = 'windows-opengl-node';
       generator = 'Ninja';
-      targetArch = 'x64';
+      vcpkgTriplet = 'x64-windows';
       // cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=x64-windows');
     }
   }
@@ -72,20 +72,26 @@ function getPresetInfo() {
   console.log(`Using Generator: "${generator}"`);
   console.log(`Build Directory: "${buildDir}"`);
   console.log(`Additional CMake Args: ${JSON.stringify(cmakeArgs)}`);
-  if (targetArch) {
-    console.log(`Target Architecture: ${targetArch}`);
+  if (vcpkgTriplet) {
+    console.log(`VCPKG Triplet: ${vcpkgTriplet}`);
   }
 
-  return { presetName, buildDir, generator, cmakeArgs, targetArch };
+  return { presetName, buildDir, generator, cmakeArgs, vcpkgTriplet, arch };
 }
 
-// --- Helper function to create environment with VSCMD_ARG_TGT_ARCH ---
-function createEnvironment(targetArch) {
+// --- Helper function to create environment with VSCMD_ARG_TGT_ARCH and VCPKG_TARGET_TRIPLET ---
+function createEnvironment(arch, vcpkgTriplet) {
   const env = { ...process.env };
   
-  if (process.platform === 'win32' && targetArch) {
-    env.VSCMD_ARG_TGT_ARCH = targetArch;
-    console.log(`Setting VSCMD_ARG_TGT_ARCH=${targetArch}`);
+  if (process.platform === 'win32') {
+    if (arch) {
+      env.VSCMD_ARG_TGT_ARCH = arch;
+      console.log(`Setting VSCMD_ARG_TGT_ARCH=${arch}`);
+    }
+    if (vcpkgTriplet) {
+      env.VCPKG_TARGET_TRIPLET = vcpkgTriplet;
+      console.log(`Setting VCPKG_TARGET_TRIPLET=${vcpkgTriplet}`);
+    }
   }
   
   return env;
@@ -93,8 +99,8 @@ function createEnvironment(targetArch) {
 
 // --- Main Build Execution ---
 try {
-  const { presetName, buildDir, generator, cmakeArgs, targetArch } = getPresetInfo();
-  const buildEnv = createEnvironment(targetArch);
+  const { presetName, buildDir, generator, cmakeArgs, vcpkgTriplet, arch } = getPresetInfo();
+  const buildEnv = createEnvironment(arch, vcpkgTriplet);
 
   // --- Cleanup old build directory before configuring ---
   console.log(`Cleaning previous build directory: ${buildDir}`);
