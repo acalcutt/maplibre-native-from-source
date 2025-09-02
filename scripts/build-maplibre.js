@@ -18,6 +18,7 @@ function getPresetInfo() {
   let buildDir = null;
   let generator = null;
   let cmakeArgs = [];
+  let targetArch = null; // For VSCMD_ARG_TGT_ARCH
 
   if (platform === 'darwin') { // macOS
     presetName = 'macos-metal-node';
@@ -29,10 +30,12 @@ function getPresetInfo() {
     if (arch === 'arm64') {
       presetName = 'windows-arm64-opengl-node';
       generator = 'Visual Studio 17 2022';
+      targetArch = 'arm64';
       // cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=arm64-windows');
     } else if (arch === 'x64') {
       presetName = 'windows-opengl-node';
       generator = 'Ninja';
+      targetArch = 'x64';
       // cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=x64-windows');
     }
   }
@@ -69,20 +72,36 @@ function getPresetInfo() {
   console.log(`Using Generator: "${generator}"`);
   console.log(`Build Directory: "${buildDir}"`);
   console.log(`Additional CMake Args: ${JSON.stringify(cmakeArgs)}`);
+  if (targetArch) {
+    console.log(`Target Architecture: ${targetArch}`);
+  }
 
-  return { presetName, buildDir, generator, cmakeArgs };
+  return { presetName, buildDir, generator, cmakeArgs, targetArch };
+}
+
+// --- Helper function to create environment with VSCMD_ARG_TGT_ARCH ---
+function createEnvironment(targetArch) {
+  const env = { ...process.env };
+  
+  if (process.platform === 'win32' && targetArch) {
+    env.VSCMD_ARG_TGT_ARCH = targetArch;
+    console.log(`Setting VSCMD_ARG_TGT_ARCH=${targetArch}`);
+  }
+  
+  return env;
 }
 
 // --- Main Build Execution ---
 try {
-  const { presetName, buildDir, generator, cmakeArgs } = getPresetInfo();
+  const { presetName, buildDir, generator, cmakeArgs, targetArch } = getPresetInfo();
+  const buildEnv = createEnvironment(targetArch);
 
   // --- Cleanup old build directory before configuring ---
   console.log(`Cleaning previous build directory: ${buildDir}`);
   if (fs.existsSync(buildDir)) {
     const rmCommand = os.platform() === 'win32' ? `rmdir /s /q "${buildDir}"` : `rm -rf "${buildDir}"`;
     console.log(`Executing cleanup: ${rmCommand}`);
-    execSync(rmCommand, { stdio: 'inherit', shell: true });
+    execSync(rmCommand, { stdio: 'inherit', shell: true, env: buildEnv });
   } else {
     console.log(`Build directory ${buildDir} does not exist, skipping cleanup.`);
   }
@@ -97,7 +116,7 @@ try {
   ].join(' ');
 
   console.log(`Configuring maplibre-native using: ${configureCommand}`);
-  execSync(configureCommand, { stdio: 'inherit' });
+  execSync(configureCommand, { stdio: 'inherit', env: buildEnv });
 
   // --- Build using the specified generator ---
   let buildCommand;
@@ -126,7 +145,7 @@ try {
   }
 
   console.log(`Building maplibre-native using: ${buildCommand}`);
-  execSync(buildCommand, { stdio: 'inherit', shell: true });
+  execSync(buildCommand, { stdio: 'inherit', shell: true, env: buildEnv });
 
   console.log('maplibre-native build successful!');
 
