@@ -5,6 +5,7 @@ const fs = require('fs');
 
 // --- Configuration ---
 const maplibreNativeSourceDir = path.resolve(__dirname, '../maplibre-native');
+const maplibreNativeBuilDir = path.resolve(maplibreNativeSourceDir, 'build');
 const cmakePresetsPath = path.join(maplibreNativeSourceDir, 'CMakePresets.json');
 const VCPKG_BINARY_SOURCES_Path = path.join(maplibreNativeSourceDir, 'platform/windows/vendor/vcpkg/archives');
 
@@ -123,7 +124,7 @@ try {
   // --- Build using the specified generator ---
   let buildCommand;
   if (generator.toLowerCase().includes('ninja')) {
-    buildCommand = `cmake --build build`;
+    buildCommand = `cmake --build "${maplibreNativeBuilDir}"`;
   } else if (generator.toLowerCase().includes('xcode')) {
     throw new Error("Xcode generator is not directly supported by this script. Ensure your Node.js presets use Ninja or a compatible generator.");
   } else if (generator.toLowerCase().includes('visual studio')) {
@@ -137,7 +138,7 @@ try {
     } catch (e) {
       console.warn(`Could not find CMAKE_BUILD_TYPE for preset "${presetName}":`, e.message);
     }
-    buildCommand = `cmake --build build`;
+    buildCommand = `cmake --build "${maplibreNativeBuilDir}"`;
     console.log(`For VS generator, using build type: ${buildType}`);
   } else {
     throw new Error(`Unsupported CMake generator: ${generator}`);
