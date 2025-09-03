@@ -43,40 +43,9 @@ function getPresetInfo() {
     throw new Error(`Unsupported OS/Architecture: ${platform}/${arch}`);
   }
 
-  // --- Determine Build Directory ---
-  let presetDefinition = null;
-  let determinedBuildDir = null;
-
-  try {
-    // Ensure you are requiring the file correctly relative to the script's location
-    const presetsData = require(cmakePresetsPath);
-    const configurePreset = presetsData.configurePresets.find(p => p.name === presetName);
-
-    if (configurePreset) {
-      presetDefinition = configurePreset;
-      if (configurePreset.binaryDir) {
-        // CMakePresets uses  as a variable, which we can replace
-        // or simply use path.join if binaryDir is relative to sourceDir
-        determinedBuildDir = configurePreset.binaryDir.replace('${sourceDir}', maplibreNativeSourceDir);
-        // If binaryDir is relative and doesn't use ${sourceDir}, use path.join
-        if (!determinedBuildDir.startsWith(maplibreNativeSourceDir)) {
-           determinedBuildDir = path.join(maplibreNativeSourceDir, configurePreset.binaryDir);
-        }
-      }
-    }
-  } catch (e) {
-    console.warn(`Could not parse CMakePresets.json to find binaryDir for preset "${presetName}":`, e.message);
-    determinedBuildDir = path.join(maplibreNativeSourceDir, `build-${presetName}`);
-  }
-
-  if (!determinedBuildDir) {
-    determinedBuildDir = path.join(maplibreNativeSourceDir, `build-${presetName}`);
-  }
-  buildDir = determinedBuildDir;
-
   console.log(`Selected Preset: "${presetName}" for ${platform} ${arch}`);
   console.log(`Using Generator: "${generator}"`);
-  console.log(`Build Directory: "${buildDir}"`);
+  console.log(`Build Directory: "${maplibreNativeBuilDir}"`);
   console.log(`Additional CMake Args: ${JSON.stringify(cmakeArgs)}`);
 
   return { presetName, buildDir, generator, cmakeArgs, arch };
@@ -100,52 +69,31 @@ try {
   }
 
   // --- Cleanup old build directory before configuring ---
-  console.log(`Cleaning previous build directory: ${buildDir}`);
-  if (fs.existsSync(buildDir)) {
-    const rmCommand = os.platform() === 'win32' ? `rmdir /s /q "${buildDir}"` : `rm -rf "${buildDir}"`;
+  console.log(`Cleaning previous build directory: ${maplibreNativeBuilDir}`);
+  if (fs.existsSync(maplibreNativeBuilDir)) {
+    const rmCommand = os.platform() === 'win32' ? `rmdir /s /q "${maplibreNativeBuilDir}"` : `rm -rf "${maplibreNativeBuilDir}"`;
     console.log(`Executing cleanup: ${rmCommand}`);
     execSync(rmCommand, { stdio: 'inherit', shell: true, env: buildEnv });
   } else {
-    console.log(`Build directory ${buildDir} does not exist, skipping cleanup.`);
+    console.log(`Build directory ${maplibreNativeBuilDir} does not exist, skipping cleanup.`);
   }
 
   // --- Configure using CMake with the selected preset ---
   // Construct the full cmake command including the additional arguments
   // Using path.join for source directory to be platform-independent
   const configureCommand = [
-    `cmake -S "${maplibreNativeSourceDir}"`,
+    `cmake`,
     `--preset=${presetName}`,
     ...cmakeArgs
   ].join(' ');
 
   console.log(`Configuring maplibre-native using: ${configureCommand}`);
-  execSync(configureCommand, { stdio: 'inherit', shell: true, env: buildEnv }); // Pass the modified environment
+  execSync(configureCommand, { stdio: 'inherit', shell: true, env: buildEnv, cwd: maplibreNativeSourceDir });
 
   // --- Build using the specified generator ---
-  let buildCommand;
-  if (generator.toLowerCase().includes('ninja')) {
-    buildCommand = `cmake --build "${maplibreNativeBuilDir}"`;
-  } else if (generator.toLowerCase().includes('xcode')) {
-    throw new Error("Xcode generator is not directly supported by this script. Ensure your Node.js presets use Ninja or a compatible generator.");
-  } else if (generator.toLowerCase().includes('visual studio')) {
-    let buildType = 'Release'; // Default
-    try {
-      const presetsData = require(cmakePresetsPath);
-      const configurePreset = presetsData.configurePresets.find(p => p.name === presetName);
-      if (configurePreset && configurePreset.cacheVariables && configurePreset.cacheVariables.CMAKE_BUILD_TYPE) {
-        buildType = configurePreset.cacheVariables.CMAKE_BUILD_TYPE;
-      }
-    } catch (e) {
-      console.warn(`Could not find CMAKE_BUILD_TYPE for preset "${presetName}":`, e.message);
-    }
-    buildCommand = `cmake --build "${maplibreNativeBuilDir}"`;
-    console.log(`For VS generator, using build type: ${buildType}`);
-  } else {
-    throw new Error(`Unsupported CMake generator: ${generator}`);
-  }
-
+  buildCommand = `cmake --build "${maplibreNativeBuilDir}"`;
   console.log(`Building maplibre-native using: ${buildCommand}`);
-  execSync(buildCommand, { stdio: 'inherit', shell: true, env: buildEnv });
+  execSync(buildCommand, { stdio: 'inherit', shell: true, env: buildEnv, cwd: maplibreNativeSourceDir});
 
   console.log('maplibre-native build successful!');
 
