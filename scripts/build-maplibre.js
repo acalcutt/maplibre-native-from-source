@@ -224,7 +224,8 @@ function getPresetInfo() {
         console.log(`Configuring maplibre-native using: ${configureCommand}`);
         execSync(configureCommand, {
             stdio: 'inherit',
-            shell: true
+            shell: true,
+            env: {...process.env}
         });
 
         // --- Build using the specified generator ---
