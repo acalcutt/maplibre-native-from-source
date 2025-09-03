@@ -9,6 +9,32 @@ async function setupWindowsDevEnvironment(arch) {
     // Check if we're already in a VS dev environment
     if (process.env.VCINSTALLDIR && process.env.VSCMD_ARG_TGT_ARCH) {
         console.log('✓ Already running in Visual Studio Developer Command Prompt');
+
+        // Execute and capture all environment variables
+        const result = execSync(command, {
+            encoding: 'utf8',
+            shell: true,
+            timeout: 30000, // 30 second timeout
+            stdio: ['pipe', 'pipe', 'pipe'] // capture stdout/stderr
+        });
+
+        // Parse environment variables from output
+        const lines = result.split('\n');
+        let envVarsSet = 0;
+
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (trimmedLine.includes('=')) {
+                const [key, ...valueParts] = trimmedLine.split('=');
+                if (key && valueParts.length > 0) {
+                    const value = valueParts.join('=');
+                    if (key && value) {
+                        process.env[key] = value;
+                        envVarsSet++;
+                    }
+                }
+            }
+        }
         console.log(`    Environment variables set: ${envVarsSet}`);
         console.log(`    VCINSTALLDIR: ${process.env.VCINSTALLDIR ? '✓ Set' : '❌ Not set'}`);
         console.log(`    VSCMD_ARG_TGT_ARCH: ${process.env.VSCMD_ARG_TGT_ARCH || '❌ Not set'}`);
