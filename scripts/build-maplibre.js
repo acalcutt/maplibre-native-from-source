@@ -9,7 +9,7 @@ async function setupWindowsDevEnvironment(arch) {
     // Check if we're already in a VS dev environment
     if (process.env.VCINSTALLDIR && process.env.VSCMD_ARG_TGT_ARCH) {
         console.log('✓ Already running in Visual Studio Developer Command Prompt');
-        console.log(`    VCINSTALLDIR: ${process.env.VCINSTALLDIR ? '✓ Set' : '❌ Not set'}`);
+        console.log(`    VCINSTALLDIR: ${process.env.VCINSTALLDIR || '❌ Not set'}`);
         console.log(`    VSCMD_ARG_TGT_ARCH: ${process.env.VSCMD_ARG_TGT_ARCH || '❌ Not set'}`);
         console.log(`    VCPKG_TARGET_TRIPLET: ${process.env.VCPKG_TARGET_TRIPLET || '❌ Not set'}`);
         console.log(`    WindowsSDKVersion: ${process.env.WindowsSDKVersion || '❌ Not set'}`);
@@ -256,7 +256,8 @@ function getPresetInfo() {
         console.log(`Building maplibre-native using: ${buildCommand}`);
         execSync(buildCommand, {
             stdio: 'inherit',
-            shell: true
+            shell: true,
+            env: {...process.env}
         });
 
         console.log('maplibre-native build successful!');
