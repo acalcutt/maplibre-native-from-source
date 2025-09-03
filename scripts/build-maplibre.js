@@ -29,11 +29,13 @@ function getPresetInfo() {
     if (arch === 'arm64') {
       presetName = 'windows-arm64-opengl-node';
       generator = 'Visual Studio 17 2022';
-      //cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=arm64-windows');
+      cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=arm64-windows');
+      cmakeArgs.push('-DBUILD_SHARED_LIBS=ON'); // Required for Windows introspection
     } else if (arch === 'x64') {
       presetName = 'windows-opengl-node';
       generator = 'Ninja';
-      //cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=x64-windows');
+      cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=x64-windows');
+      cmakeArgs.push('-DBUILD_SHARED_LIBS=ON'); // Required for Windows introspection
     }
   }
 
@@ -90,19 +92,19 @@ try {
   // --- Configure using CMake with the selected preset ---
   // Construct the full cmake command including the additional arguments
   const configureCommand = [
-    `cmake -S ${maplibreNativeSourceDir}`,
-    `-B ${buildDir}`,
+    `cmake -S "${maplibreNativeSourceDir}"`,
+    `-B "${buildDir}"`,
     `--preset=${presetName}`,
     ...cmakeArgs // Pass the already formatted arguments
   ].join(' ');
 
   console.log(`Configuring maplibre-native using: ${configureCommand}`);
-  execSync(configureCommand, { stdio: 'inherit' });
+  execSync(configureCommand, { stdio: 'inherit', shell: true });
 
   // --- Build using the specified generator ---
   let buildCommand;
   if (generator.toLowerCase().includes('ninja')) {
-    buildCommand = `ninja -C ${buildDir}`;
+    buildCommand = `ninja -C "${buildDir}"`;
   } else if (generator.toLowerCase().includes('xcode')) {
     throw new Error("Xcode generator is not directly supported by this script. Ensure your Node.js presets use Ninja or a compatible generator.");
   } else if (generator.toLowerCase().includes('visual studio')) {
@@ -117,10 +119,10 @@ try {
       console.warn(`Could not find CMAKE_BUILD_TYPE for preset "${presetName}":`, e.message);
     }
     // For VS generators, the --config argument is critical.
-    buildCommand = `cmake --build ${buildDir} --config ${buildType}`;
+    buildCommand = `cmake --build "${buildDir}" --config ${buildType}`;
     console.log(`For VS generator, using build type: ${buildType}`);
   } else if (generator.toLowerCase().includes('makefiles')) {
-    buildCommand = `make -C ${buildDir}`;
+    buildCommand = `make -C "${buildDir}"`;
   } else {
     throw new Error(`Unsupported CMake generator: ${generator}`);
   }
