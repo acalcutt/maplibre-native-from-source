@@ -9,6 +9,11 @@ async function setupWindowsDevEnvironment(arch) {
     // Check if we're already in a VS dev environment
     if (process.env.VCINSTALLDIR && process.env.VSCMD_ARG_TGT_ARCH) {
         console.log('✓ Already running in Visual Studio Developer Command Prompt');
+        console.log(`    Environment variables set: ${envVarsSet}`);
+        console.log(`    VCINSTALLDIR: ${process.env.VCINSTALLDIR ? '✓ Set' : '❌ Not set'}`);
+        console.log(`    VSCMD_ARG_TGT_ARCH: ${process.env.VSCMD_ARG_TGT_ARCH || '❌ Not set'}`);
+        console.log(`    WindowsSDKVersion: ${process.env.WindowsSDKVersion || '❌ Not set'}`);
+        console.log(`    Platform: ${process.env.Platform || '❌ Not set'}`);
         return;
     }
 
@@ -128,12 +133,10 @@ function getPresetInfo() {
         if (arch === 'arm64') {
             presetName = 'windows-arm64-opengl-node';
             generator = 'Visual Studio 17 2022';
-            cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=arm64-windows');
             cmakeArgs.push('-DBUILD_SHARED_LIBS=ON'); // Required for Windows introspection
         } else if (arch === 'x64') {
             presetName = 'windows-opengl-node';
             generator = 'Ninja';
-            cmakeArgs.push('-DVCPKG_TARGET_TRIPLET=x64-windows');
             cmakeArgs.push('-DBUILD_SHARED_LIBS=ON'); // Required for Windows introspection
         }
     }
