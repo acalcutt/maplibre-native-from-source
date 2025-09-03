@@ -56,8 +56,8 @@ function getPresetInfo() {
       if (configurePreset.binaryDir) {
         // CMakePresets uses  as a variable, which we can replace
         // or simply use path.join if binaryDir is relative to sourceDir
-        determinedBuildDir = configurePreset.binaryDir.replace('$', maplibreNativeSourceDir);
-        // If binaryDir is relative and doesn't use $, use path.join
+        determinedBuildDir = configurePreset.binaryDir.replace('${sourceDir}', maplibreNativeSourceDir);
+        // If binaryDir is relative and doesn't use ${sourceDir}, use path.join
         if (!determinedBuildDir.startsWith(maplibreNativeSourceDir)) {
            determinedBuildDir = path.join(maplibreNativeSourceDir, configurePreset.binaryDir);
         }
